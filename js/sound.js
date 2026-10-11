@@ -6,7 +6,7 @@
 (function (root) {
   'use strict';
   const RC = root.RC;
-  let ctx = null, master = null, noiseBuf = null;
+  let ctx = null, master = null, out = null, noiseBuf = null;
   let muted = false;
   try { muted = localStorage.getItem('ragdoll-chamber.muted') === '1'; } catch (e) { /* storage blocked */ }
 
@@ -15,7 +15,17 @@
     const AC = root.AudioContext || root.webkitAudioContext;
     if (!AC) return;
     ctx = new AC();
-    master = ctx.createGain(); master.gain.value = muted ? 0 : 0.5; master.connect(ctx.destination);
+    out = ctx.createGain(); out.gain.value = muted ? 0 : 0.55; out.connect(ctx.destination);
+    // (V0.2) the dungeon's own echo: every sound goes dry and into a stone-room reverb
+    master = ctx.createGain(); master.gain.value = 1;
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.connect(out);
+    master.connect(comp);
+    const verb = ctx.createConvolver(), len = Math.floor(ctx.sampleRate * 1.9), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) { const t = i / len; d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 3.2) * (i < 400 ? i / 400 : 1); } }
+    verb.buffer = ir;
+    const wet = ctx.createGain(); wet.gain.value = 0.32;
+    const tone = ctx.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = 3200;
+    master.connect(tone); tone.connect(verb); verb.connect(wet); wet.connect(comp);
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 1, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -36,11 +46,13 @@
   const S = {
     init,
     get muted() { return muted; },
-    setMuted(m) { muted = m; try { localStorage.setItem('ragdoll-chamber.muted', m ? '1' : '0'); } catch (e) { /* ignore */ } if (master) master.gain.value = m ? 0 : 0.5; },
+    setMuted(m) { muted = m; try { localStorage.setItem('ragdoll-chamber.muted', m ? '1' : '0'); } catch (e) { /* ignore */ } if (out) out.gain.value = m ? 0 : 0.55; },
     thud(strength, kind) {
       if (!ctx || muted) return; const t = now();
       noise(t, 0.12 + strength * 0.2, 'lowpass', 250 + strength * 700, 90, 0.25 + strength * 0.6);
       tone(t, 'sine', 120 + strength * 40, 45, 0.18 + strength * 0.15, 0.3 + strength * 0.4);
+      // a soft cloth slap on top: it is a stuffed toy
+      noise(t, 0.06 + strength * 0.05, 'bandpass', 1400, 600, 0.12 + strength * 0.2);
       if (kind === 'anvil') { tone(t, 'square', 523, 0, 0.5, 0.12); tone(t, 'square', 789, 0, 0.35, 0.08); }
       if (kind === 'piano') { for (const f of [196, 247, 311, 370, 466]) tone(t + Math.random() * 0.04, 'triangle', f, 0, 1.2, 0.09); }
       if (kind === 'cannonball') tone(t, 'square', 330, 160, 0.12, 0.05);

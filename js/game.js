@@ -12,7 +12,7 @@
   const DT = 1 / 60, SUB = 2;
 
   const world = new RC.World(ROOM);
-  const buddy = new RC.Buddy(world, { name: 'Stitches', personality: 'smug', color: '#c9573a' });
+  const buddy = new RC.Buddy(world, { name: 'Stitches', personality: 'smug', color: '#d4522f' });
   const view = new RC.Renderer($('c'), world, buddy);
 
   const TOOLS = {
@@ -99,9 +99,11 @@
 
   // ── events from the buddy ──
   let wasDizzy = false, lastFace = 'smug';
+  let freeze = 0;                       // hit-stop: the world holds still for a beat on a big hit
   function handleEvents() {
     for (const e of buddy.events.splice(0)) {
       view.effect(e);
+      if (e.type === 'thud' && e.strength > 0.55) freeze = Math.max(freeze, 0.03 + e.strength * 0.06);
       if (e.type === 'thud') { RC.Sound.thud(e.strength, e.prop); addPoints(e.impact * (e.prop === 'floor' ? 1.5 : 4), e.pos); }
       if (e.type === 'pop') { RC.Sound.pop(); addPoints(60, e.pos, 'Button!'); }
       if (e.type === 'rip') { RC.Sound.rip(); addPoints(200, e.pos, 'Seam split!'); }
@@ -133,8 +135,10 @@
       buddy.hit(p, 15, { kind: 'boot' }, dir);
       RC.Sound.whoosh(0.8);
       const m = view.propMesh('boot'); view.scene.add(m);
-      const from = V.sub(hit.buddy, V.mul(flat, 0.9));
+      // the boot swings in from behind and above, toe first
+      const from = V.add(V.sub(hit.buddy, V.mul(flat, 1.1)), { x: 0, y: 0.7, z: 0 });
       boots.push({ m, from, to: hit.buddy, t: 0, dir: flat });
+      view.shake(0.07);
     }
     if (k === 'anvil' || k === 'piano') {
       const r = k === 'anvil' ? 0.28 : 0.5;
@@ -148,6 +152,7 @@
       const from = { x: side * (ROOM.w - 0.25), y: Math.max(0.5, aim.y + 0.15), z: aim.z * 0.6 };
       const dir = V.norm(V.sub(aim, from));
       world.addProp('cannonball', from, 0.17, 20, V.add(V.mul(dir, 20), { x: 0, y: 1.2, z: 0 }), 4, DT / SUB);
+      view.cannon(from, dir);
       RC.Sound.boom();
     }
   }
@@ -240,9 +245,22 @@
   }
   window.addEventListener('resize', resize);
   let last = performance.now(), acc = 0;
+  let fpsNow = 0, fpsN = 0, fpsT = 0;
   function frame(nowT) {
     const real = Math.min(0.1, (nowT - last) / 1000); last = nowT; acc += real;
+    fpsN++; fpsT += real; if (fpsT > 1) { fpsNow = fpsN / fpsT; fpsN = 0; fpsT = 0; }
     let steps = 0;
+    if (freeze > 0) { freeze -= real; acc = 0; }
+    // heavy props landing: a clang, dust and a shake
+    for (const pr of world.props) {
+      const vy = (pr.p.pos.y - pr.p.prev.y) / (DT / SUB);
+      if (pr.lastVy != null && pr.lastVy < -4 && pr.p.pos.y - pr.p.r < 0.05 && (pr.kind === 'anvil' || pr.kind === 'piano')) {
+        const s = Math.min(1, -pr.lastVy / 14);
+        view.effect({ type: 'land', pos: V.copy(pr.p.pos), strength: s });
+        RC.Sound.thud(0.5 + s * 0.5, pr.kind);
+      }
+      pr.lastVy = vy;
+    }
     while (acc >= DT && steps < 4) {
       buddy.update(DT);
       for (let i = 0; i < SUB; i++) world.step(DT / SUB);
@@ -254,12 +272,14 @@
     // boots swing in, then fade
     for (const b of boots) {
       b.t += real;
-      const k = Math.min(1, b.t / 0.12);
-      const at = V.add(b.from, V.mul(V.sub(b.to, b.from), k));
+      // an arc: down and through, then a follow-through past the doll
+      const k = Math.min(1.35, b.t / 0.13), e = k < 1 ? k * k : k;
+      const at = V.add(b.from, V.mul(V.sub(b.to, b.from), e));
+      at.y -= Math.sin(Math.min(1, k) * Math.PI) * 0.12;
       b.m.position.set(at.x, at.y, at.z);
       b.m.lookAt(at.x + b.dir.x, at.y, at.z + b.dir.z);
-      b.m.rotation.x += 0;
-      if (b.t > 0.5) b.m.scale.setScalar(Math.max(0.01, 1 - (b.t - 0.5) / 0.3));
+      b.m.rotateX(-0.9 + Math.min(1, k) * 1.1);
+      if (b.t > 0.45) b.m.scale.setScalar(Math.max(0.01, 1 - (b.t - 0.45) / 0.3));
     }
     for (const b of boots.splice(0)) { if (b.t < 0.8) boots.push(b); else view.scene.remove(b.m); }
     // the camera drifts to keep the buddy in view
@@ -274,5 +294,5 @@
   buildTools(); setTool('grab'); muteLabel(); resize();
   $('buddyname').textContent = buddy.opts.name;
   requestAnimationFrame(frame);
-  window.RagdollChamber = { world, buddy, view, setTool, useTool: (k, pt) => useTool(k, { buddy: pt, floor: pt }) };
+  window.RagdollChamber = { world, buddy, view, setTool, fps: () => fpsNow, useTool: (k, pt) => useTool(k, { buddy: pt, floor: pt }) };
 })();
