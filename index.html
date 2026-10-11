@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ragdoll Chamber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@600;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>RAGDOLL <span>CHAMBER</span></h1>
+      <p>GooseKnightGaming · V0.1 prototype · <b id="buddyname">Stitches</b>, the rag doll</p>
+    </div>
+    <div class="meters" aria-label="How the buddy is doing">
+      <div class="meter"><b>Fluster</b><div class="bar"><i id="m-fluster" class="fl"></i></div></div>
+      <div class="meter"><b>Dizzy</b><div class="bar"><i id="m-dizzy" class="dz"></i></div></div>
+      <div class="meter"><b>Wear</b><div class="bar"><i id="m-wear" class="wr"></i></div></div>
+      <div class="state" id="state" aria-live="polite">Standing</div>
+    </div>
+    <div class="scorebox">
+      <div class="score"><span id="score">0</span><em id="combo"></em></div>
+      <div class="best">Best <span id="best">0</span></div>
+    </div>
+  </header>
+  <main class="stage">
+    <canvas id="c" aria-label="The dungeon, with the rag doll in it. Use the tools to play with it."></canvas>
+    <div id="labels" class="labels" aria-hidden="true"></div>
+    <div id="bubble" class="bubble" hidden></div>
+    <p id="hint" class="hint"></p>
+  </main>
+  <nav id="tools" class="tools" aria-label="Tools"></nav>
+  <div class="actions">
+    <button type="button" id="repair" class="primary">Repair</button>
+    <button type="button" id="recentre">Recentre camera</button>
+    <button type="button" id="mute" aria-pressed="true">Sound on</button>
+    <button type="button" id="resetscore">Reset score</button>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/buddy.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/render.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
