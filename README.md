@@ -2,7 +2,7 @@
 
 A slapstick 2.5D stress toy by GooseKnightGaming. Grab, flick, kick and drop things on a cartoon rag doll, and watch it flop, panic, pop its buttons and seams, then stitch itself back together.
 
-Current version: **V0.1, physics prototype** (milestone 1 of the design doc). One buddy (Stitches, the rag doll), one room (the dungeon), six tools.
+Current version: **V0.2, the look-and-feel pass**. One buddy (Stitches, the rag doll), one room (the dungeon), six tools.
 
 ## Play locally
 Open `index.html` in a browser. It needs an internet connection the first time, to load Three.js.
@@ -27,5 +27,15 @@ Open `index.html` in a browser. It needs an internet connection the first time, 
 The best score saves in the browser.
 
 ## Changelog
+**V0.2: the look-and-feel pass**
+- The dungeon is lit like one: a lantern hanging over the middle throws a warm pool of light, two torches flicker on the back wall, cold moonlight comes through a barred window, and dust drifts in the air. Film-style tone mapping, a vignette.
+- Real stonework: irregular blocks with mortar, mottling and damp streaks; wet flagstones with cracks and puddles that catch the light; a timbered ceiling; corner pillars; a studded door; chains and shackles; straw, a barrel and a bucket. The room carries on towards the camera, so there is no black void at the sides; a stone sill marks the edge of the play area.
+- Stitches is a proper stuffed toy: chunkier, felt-textured, with an ink outline, a stitched seam down the front and round the waist, thread rings where the arms and legs are sewn on, sewn-on button eyes with a shine, yarn hair, stitched patches and four-hole buttons. A soft shadow keeps it grounded.
+- Hits land: the camera shakes, big hits pause the world for a beat, the doll flashes white, dust kicks up where things meet the floor, bigger stuffing puffs.
+- The anvil and piano show a flashing target on the floor before they land, and land with a clang, dust and a shake.
+- The cannon actually appears: it pokes out of the wall, fires with a flash of light and smoke, and kicks back.
+- The boot swings in from behind and above, toe first, and follows through.
+- Sound: everything echoes off the stone (a generated reverb), and there is a soft cloth slap on each hit.
+
 **V0.1**
 - Physics prototype: the rag doll, the dungeon, grab and fling, flick, boot, anvil, cannon and piano; squashing, stuffing puffs, buttons popping, limbs and the head coming off at the seams, mending and standing back up; faces, speech bubbles, generated sounds, points and combos.
